@@ -3,24 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CIS Assessment Dashboard</title>
+    <title>CIS Security Assessment Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #3498db;
-            --accent-color: #e74c3c;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --success: #27ae60;
+            --info: #17a2b8;
         }
         
         .dashboard-header {
-            background: linear-gradient(135deg, var(--primary-color), #343a40);
+            background: linear-gradient(135deg, var(--primary), #343a40);
             color: white;
             padding: 2rem 0;
             margin-bottom: 2rem;
@@ -30,8 +28,9 @@
             border-radius: 10px;
             padding: 1.5rem;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            height: 100%;
             text-align: center;
+            margin-bottom: 1.5rem;
+            height: 100%;
         }
         
         .score-value {
@@ -45,53 +44,41 @@
         }
         
         .chart-container {
-            position: relative;
-            height: 300px;
-            margin-bottom: 2rem;
+            height: 250px;
+            margin-bottom: 1rem;
         }
         
         .implementation-card {
-            transition: transform 0.3s;
-            text-align: center;
+            border-radius: 8px;
             color: white;
+            padding: 1rem;
+            text-align: center;
+            margin-bottom: 1rem;
+            transition: transform 0.3s;
         }
         
         .implementation-card:hover {
             transform: translateY(-5px);
         }
         
-        .badge-controls {
-            background-color: var(--secondary-color);
-        }
-        
-        .badge-benchmarks {
-            background-color: var(--accent-color);
-        }
+        .not-implemented { background-color: var(--danger); }
+        .partial { background-color: var(--warning); }
+        .mostly { background-color: var(--info); }
+        .fully { background-color: var(--success); }
     </style>
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="/">
-                <i class="fas fa-shield-alt me-2"></i>CIS Assessment
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-shield-alt me-2"></i>CIS Security Dashboard
             </a>
-            <div class="d-flex">
-                <a href="/" class="btn btn-outline-light me-2">
-                    <i class="fas fa-home me-1"></i> Home
-                </a>
-                <a href="/dashboard" class="btn btn-light">
-                    <i class="fas fa-chart-bar me-1"></i> Dashboard
-                </a>
-            </div>
         </div>
     </nav>
 
-    <!-- Dashboard Header -->
     <div class="dashboard-header">
-        <div class="container text-center">
-            <h1><i class="fas fa-chart-bar me-2"></i>Assessment Dashboard</h1>
-            <p class="lead">Your CIS Security Posture Analysis</p>
+        <div class="container">
+            <h1><i class="fas fa-chart-bar me-2"></i>Security Posture Analysis</h1>
         </div>
     </div>
 
@@ -117,8 +104,8 @@
                 {% endfor %}
             {% endif %}
 
-            <!-- Score Summary -->
-            <div class="row mb-4">
+            <!-- Score Cards -->
+            <div class="row">
                 <div class="col-md-4">
                     <div class="score-card bg-light">
                         <h3>Overall Score</h3>
@@ -132,31 +119,31 @@
                 <div class="col-md-4">
                     <div class="score-card bg-light">
                         <h3>CIS Controls</h3>
-                        <div class="score-value text-info">{{ scores.control }}%</div>
+                        <div class="score-value" style="color: var(--secondary)">{{ scores.control }}%</div>
                         <div class="progress progress-lg mt-2">
-                            <div class="progress-bar bg-info" style="width: {{ scores.control }}%"></div>
+                            <div class="progress-bar" style="background-color: var(--secondary); width: {{ scores.control }}%"></div>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="score-card bg-light">
                         <h3>CIS Benchmarks</h3>
-                        <div class="score-value text-danger">{{ scores.benchmark }}%</div>
+                        <div class="score-value" style="color: var(--danger)">{{ scores.benchmark }}%</div>
                         <div class="progress progress-lg mt-2">
-                            <div class="progress-bar bg-danger" style="width: {{ scores.benchmark }}%"></div>
+                            <div class="progress-bar" style="background-color: var(--danger); width: {{ scores.benchmark }}%"></div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Charts -->
-            <div class="row mb-4">
+            <div class="row mt-4">
                 <div class="col-md-6">
                     <div class="card shadow-sm h-100">
                         <div class="card-body">
                             <h4 class="card-title">Implementation Levels</h4>
                             <div class="chart-container">
-                                <canvas id="implementationChart"></canvas>
+                                <canvas id="implChart"></canvas>
                             </div>
                         </div>
                     </div>
@@ -174,56 +161,39 @@
             </div>
 
             <!-- Implementation Breakdown -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="card shadow-sm">
-                        <div class="card-body">
-                            <h4 class="card-title">Implementation Breakdown</h4>
-                            <div class="row">
-                                <div class="col-md-3">
-                                    <div class="implementation-card card text-white bg-danger mb-3">
-                                        <div class="card-body">
-                                            <h5>Not Implemented</h5>
-                                            <h2>{{ implementation_levels['Not Implemented'] }}</h2>
-                                            <p>{{ (implementation_levels['Not Implemented'] / scores.total_questions * 100)|round(1) }}%</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="implementation-card card text-white bg-warning mb-3">
-                                        <div class="card-body">
-                                            <h5>Partially Implemented</h5>
-                                            <h2>{{ implementation_levels['Partially Implemented'] }}</h2>
-                                            <p>{{ (implementation_levels['Partially Implemented'] / scores.total_questions * 100)|round(1) }}%</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="implementation-card card text-white bg-info mb-3">
-                                        <div class="card-body">
-                                            <h5>Mostly Implemented</h5>
-                                            <h2>{{ implementation_levels['Mostly Implemented'] }}</h2>
-                                            <p>{{ (implementation_levels['Mostly Implemented'] / scores.total_questions * 100)|round(1) }}%</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="implementation-card card text-white bg-success mb-3">
-                                        <div class="card-body">
-                                            <h5>Fully Implemented</h5>
-                                            <h2>{{ implementation_levels['Fully Implemented'] }}</h2>
-                                            <p>{{ (implementation_levels['Fully Implemented'] / scores.total_questions * 100)|round(1) }}%</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+            <div class="row mt-4">
+                <div class="col-md-3">
+                    <div class="implementation-card not-implemented">
+                        <h5>Not Implemented</h5>
+                        <h2>{{ implementation_levels['Not Implemented'] }}</h2>
+                        <p>{{ (implementation_levels['Not Implemented'] / scores.total_questions * 100)|round(1) }}%</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="implementation-card partial">
+                        <h5>Partially Implemented</h5>
+                        <h2>{{ implementation_levels['Partially Implemented'] }}</h2>
+                        <p>{{ (implementation_levels['Partially Implemented'] / scores.total_questions * 100)|round(1) }}%</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="implementation-card mostly">
+                        <h5>Mostly Implemented</h5>
+                        <h2>{{ implementation_levels['Mostly Implemented'] }}</h2>
+                        <p>{{ (implementation_levels['Mostly Implemented'] / scores.total_questions * 100)|round(1) }}%</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="implementation-card fully">
+                        <h5>Fully Implemented</h5>
+                        <h2>{{ implementation_levels['Fully Implemented'] }}</h2>
+                        <p>{{ (implementation_levels['Fully Implemented'] / scores.total_questions * 100)|round(1) }}%</p>
                     </div>
                 </div>
             </div>
 
             <!-- Recommendations -->
-            <div class="row mb-4">
+            <div class="row mt-4">
                 <div class="col-12">
                     <div class="card shadow-sm">
                         <div class="card-body">
@@ -232,7 +202,7 @@
                             <div class="alert alert-success">
                                 <h5><i class="fas fa-check-circle me-2"></i>Excellent Security Posture</h5>
                                 <p>Your organization demonstrates strong security controls. Focus on continuous improvement.</p>
-                                <ul>
+                                <ul class="mb-0">
                                     <li>Review partially implemented controls</li>
                                     <li>Consider advanced security measures</li>
                                     <li>Schedule regular security audits</li>
@@ -242,7 +212,7 @@
                             <div class="alert alert-warning">
                                 <h5><i class="fas fa-exclamation-triangle me-2"></i>Moderate Security Posture</h5>
                                 <p>You've implemented basic security measures but have room for improvement.</p>
-                                <ul>
+                                <ul class="mb-0">
                                     <li>Focus on "Not Implemented" controls first</li>
                                     <li>Create an implementation plan</li>
                                     <li>Prioritize high-risk controls</li>
@@ -252,7 +222,7 @@
                             <div class="alert alert-danger">
                                 <h5><i class="fas fa-exclamation-circle me-2"></i>Weak Security Posture</h5>
                                 <p>Your organization has significant security gaps needing immediate attention.</p>
-                                <ul>
+                                <ul class="mb-0">
                                     <li>Implement basic controls first (CIS 1-6)</li>
                                     <li>Consider security consultants</li>
                                     <li>Develop a phased implementation plan</li>
@@ -260,29 +230,27 @@
                             </div>
                             {% endif %}
                             
-                            <div class="mt-3">
-                                <h5>Action Items</h5>
-                                <div class="list-group">
-                                    {% if scores.control < scores.benchmark %}
-                                    <a href="#" class="list-group-item list-group-item-action">
-                                        <i class="fas fa-arrow-up text-info me-2"></i>
-                                        Improve CIS Controls (Current: {{ scores.control }}%)
-                                    </a>
-                                    {% else %}
-                                    <a href="#" class="list-group-item list-group-item-action">
-                                        <i class="fas fa-arrow-up text-danger me-2"></i>
-                                        Improve CIS Benchmarks (Current: {{ scores.benchmark }}%)
-                                    </a>
-                                    {% endif %}
-                                    <a href="#" class="list-group-item list-group-item-action">
-                                        <i class="fas fa-book text-primary me-2"></i>
-                                        Review CIS Documentation
-                                    </a>
-                                    <a href="/" class="list-group-item list-group-item-action">
-                                        <i class="fas fa-redo text-success me-2"></i>
-                                        Retake Assessment After Improvements
-                                    </a>
-                                </div>
+                            <h5 class="mt-3">Action Items</h5>
+                            <div class="list-group">
+                                {% if scores.control < scores.benchmark %}
+                                <a href="#" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-arrow-up me-2" style="color: var(--secondary)"></i>
+                                    Improve CIS Controls (Current: {{ scores.control }}%)
+                                </a>
+                                {% else %}
+                                <a href="#" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-arrow-up me-2" style="color: var(--danger)"></i>
+                                    Improve CIS Benchmarks (Current: {{ scores.benchmark }}%)
+                                </a>
+                                {% endif %}
+                                <a href="#" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-book me-2" style="color: var(--primary)"></i>
+                                    Review CIS Documentation
+                                </a>
+                                <a href="/" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-redo me-2" style="color: var(--success)"></i>
+                                    Retake Assessment
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -292,7 +260,7 @@
             <script>
                 // Implementation Chart
                 new Chart(
-                    document.getElementById('implementationChart').getContext('2d'),
+                    document.getElementById('implChart'),
                     {
                         type: 'doughnut',
                         data: {
@@ -304,62 +272,71 @@
                                     {{ implementation_levels['Mostly Implemented'] }},
                                     {{ implementation_levels['Fully Implemented'] }}
                                 ],
-                                backgroundColor: ['#dc3545', '#ffc107', '#17a2b8', '#28a745']
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: { legend: { position: 'bottom' } }
-                        }
-                    }
-                );
-
-                // Score Chart
-                new Chart(
-                    document.getElementById('scoreChart').getContext('2d'),
-                    {
-                        type: 'bar',
-                        data: {
-                            labels: ['Overall', 'Controls', 'Benchmarks'],
-                            datasets: [{
-                                label: 'Scores',
-                                data: [{{ scores.overall }}, {{ scores.control }}, {{ scores.benchmark }}],
                                 backgroundColor: [
-                                    'rgba(54, 162, 235, 0.7)',
-                                    'rgba(75, 192, 192, 0.7)',
-                                    'rgba(255, 99, 132, 0.7)'
+                                    'var(--danger)',
+                                    'var(--warning)',
+                                    'var(--info)',
+                                    'var(--success)'
                                 ]
                             }]
                         },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
-                            scales: { y: { beginAtZero: true, max: 100 } }
+                            plugins: {
+                                legend: {
+                                    position: 'bottom'
+                                }
+                            }
+                        }
+                    }
+                );
+
+                // Score Chart
+                new Chart(
+                    document.getElementById('scoreChart'),
+                    {
+                        type: 'bar',
+                        data: {
+                            labels: ['Overall', 'Controls', 'Benchmarks'],
+                            datasets: [{
+                                label: 'Score (%)',
+                                data: [{{ scores.overall }}, {{ scores.control }}, {{ scores.benchmark }}],
+                                backgroundColor: [
+                                    'var(--primary)',
+                                    'var(--secondary)',
+                                    'var(--danger)'
+                                ]
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    max: 100
+                                }
+                            }
                         }
                     }
                 );
             </script>
         {% else %}
-            <div class="container text-center mt-5">
-                <div class="alert alert-warning">
-                    <h4><i class="fas fa-exclamation-triangle me-2"></i>No Assessment Results Found</h4>
-                    <p>Please complete an assessment first to view the dashboard.</p>
-                    <a href="/" class="btn btn-primary mt-3">
-                        <i class="fas fa-tasks me-2"></i>Take Assessment
-                    </a>
-                </div>
+            <div class="alert alert-warning text-center mt-5">
+                <h4><i class="fas fa-exclamation-triangle me-2"></i>No Assessment Results Found</h4>
+                <p>Please complete an assessment first to view the dashboard.</p>
+                <a href="/" class="btn btn-primary mt-3">
+                    <i class="fas fa-tasks me-2"></i>Take Assessment
+                </a>
             </div>
         {% endif %}
-    </div>
 
-    <!-- Footer -->
-    <footer class="bg-dark text-white py-4 mt-4">
-        <div class="container text-center">
-            <p class="mb-0">Assessment completed on {{ results.completed_at if 'assessment_results' in session else '' }}</p>
-            <p class="mb-0">&copy; {{ datetime.now().year }} CIS Security Assessment</p>
-        </div>
-    </footer>
+        <footer class="text-center mt-5 mb-4">
+            <p>Assessment completed on {{ results.completed_at if 'assessment_results' in session else '' }}</p>
+            <p>&copy; {{ datetime.now().year }} CIS Security Assessment</p>
+        </footer>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
